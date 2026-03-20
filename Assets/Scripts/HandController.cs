@@ -1,166 +1,212 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using System.Collections;
 
-public class HandController : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
+public class HandController : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private RectTransform handRect;
-    [SerializeField] private ZoneDetector faceZone;
-    [SerializeField] private Canvas mainCanvas;
+    [Header("Компоненты")]
+    [SerializeField] private SpriteRenderer handSprite;
+    [SerializeField] private Sprite defaultHand;
 
-    [Header("Settings")]
-    [SerializeField] private float dragSpeed = 1f;
-    [SerializeField] private float returnDuration = 0.3f;
-    [SerializeField] private float animationDuration = 0.2f;
+    [Header("Зоны")]
+    [SerializeField] private Collider2D faceZone;
+    [SerializeField] private FaceController faceController;
 
-    public enum HandState
-    {
-        Idle,
-        HoldingCream,
-        HoldingBrush,
-        HoldingLipstick,
-        Returning
-    }
+    [Header("Объекты")]
+    [SerializeField] private Transform creamObject;
 
-    private HandState currentState = HandState.Idle;
-    private Vector2 startPosition;
+    private Vector3 startPosition;
+    private Vector3 creamStartPosition;
+    private bool holdingCream = false;
     private bool isDragging = false;
-    private Vector2 dragOffset;
 
-    // События
-    public System.Action OnMakeupApplied;
-    public System.Action OnMakeupCancelled;
-    public System.Action<HandState> OnStateChanged;
-
-    private void Start()
+    void Start()
     {
-        if (handRect == null) handRect = GetComponent<RectTransform>();
-        startPosition = handRect.anchoredPosition;
+        startPosition = transform.position;
+
+        if (creamObject != null)
+            creamStartPosition = creamObject.position;
+
+        if (handSprite == null)
+            handSprite = GetComponent<SpriteRenderer>();
+
+        SetHandSprite(defaultHand);
     }
 
-    public void OnBeginDrag(PointerEventData eventData)
-    {
-        if (currentState == HandState.Idle || currentState == HandState.Returning) return;
+    public bool IsHoldingCream() => holdingCream;
 
+    public void StartDrag()
+    {
         isDragging = true;
-        dragOffset = handRect.anchoredPosition - eventData.position;
-        GameManager.Instance?.SetState(GameManager.GameState.ApplyingMakeup);
     }
 
-    public void OnDrag(PointerEventData eventData)
-    {
-        if (!isDragging) return;
-        handRect.anchoredPosition = eventData.position + dragOffset;
-    }
-
-    public void OnEndDrag(PointerEventData eventData)
+    public void EndDrag(PointerEventData eventData)
     {
         if (!isDragging) return;
         isDragging = false;
 
-        if (faceZone != null && faceZone.IsPointerInZone(eventData))
+        if (faceZone != null)
         {
-            OnReleaseInFaceZone();
+            Vector2 worldPoint = Camera.main.ScreenToWorldPoint(eventData.position);
+            if (faceZone.OverlapPoint(worldPoint))
+            {
+                StartCoroutine(ApplyCreamAndReturn());
+                return;
+            }
         }
-        else
+
+        StartCoroutine(ReturnCreamToStart());
+    }
+
+    public void TakeCream()
+    {
+        StartCoroutine(TakeCreamAnimation());
+    }
+
+    private IEnumerator TakeCreamAnimation()
+    {
+        // 1. Двигаем руку к крему
+        yield return StartCoroutine(MoveToPosition(transform.position, creamStartPosition, 0.2f, null));
+
+        // 2. Анимация "схватить"
+        yield return StartCoroutine(ScaleAnimation(0.8f, 0.05f));
+        yield return StartCoroutine(ScaleAnimation(1f, 0.05f));
+
+        // 3. Крем "магнитится" к руке
+        holdingCream = true;
+
+        if (creamObject != null)
         {
-            OnReleaseOutsideZone();
+            // Делаем крем дочерним объектом руки
+            creamObject.SetParent(transform);
+            // Сохраняем позицию крема относительно руки (чтобы он был в руке)
+            creamObject.localPosition = new Vector3(-0.305f, 0.568f, 0);
+            // Уменьшаем немного для реализма
+            creamObject.localScale = Vector3.one * 0.8f;
+
+            // Отключаем коллайдер у крема, чтобы он не мешал перетаскиванию
+            Collider2D creamCollider = creamObject.GetComponent<Collider2D>();
+            if (creamCollider != null)
+                creamCollider.enabled = false;
         }
+
+        // 4. Двигаем руку в промежуточную позицию
+        Vector3 middlePos = GetMiddlePosition();
+        yield return StartCoroutine(MoveToPosition(transform.position, middlePos, 0.2f, null));
+
+        Debug.Log("✅ Крем взят! Теперь перетащи руку к лицу");
     }
 
-    private void OnReleaseInFaceZone()
+    private IEnumerator ApplyCreamAndReturn()
     {
-        Debug.Log("Released in face zone - applying makeup");
+        // 1. Анимация нанесения
+        Vector3 originalPos = transform.position;
+        Vector3 forwardPos = originalPos + new Vector3(0, 0.3f, 0);
 
-        AnimateApply(() =>
+        yield return StartCoroutine(MoveToPosition(originalPos, forwardPos, 0.1f, null));
+        yield return StartCoroutine(MoveToPosition(forwardPos, originalPos, 0.1f, null));
+
+        // 2. Анимация масштаба
+        yield return StartCoroutine(ScaleAnimation(1.2f, 0.1f));
+        yield return StartCoroutine(ScaleAnimation(1f, 0.1f));
+
+        // 3. Убираем прыщи
+        if (faceController != null)
+            faceController.RemoveAcne();
+
+        // 4. Возвращаем крем на место
+        yield return StartCoroutine(ReturnCreamToStart());
+
+        Debug.Log("✅ Крем нанесён!");
+    }
+
+    private IEnumerator ReturnCreamToStart()
+    {
+        holdingCream = false;
+
+        // Открепляем крем от руки
+        if (creamObject != null)
         {
-            OnMakeupApplied?.Invoke();
-            ReturnToStartPosition();
-        });
+            creamObject.SetParent(null);
+
+            // Включаем коллайдер обратно
+            Collider2D creamCollider = creamObject.GetComponent<Collider2D>();
+            if (creamCollider != null)
+                creamCollider.enabled = true;
+
+            // Возвращаем крем на исходную позицию
+            yield return StartCoroutine(MoveCreamToPosition(creamObject.position, creamStartPosition, 0.3f, null));
+
+            // Возвращаем исходный масштаб
+            creamObject.localScale = Vector3.one;
+        }
+
+        // Возвращаем руку
+        yield return StartCoroutine(MoveToPosition(transform.position, startPosition, 0.3f, null));
+
+        SetHandSprite(defaultHand);
     }
 
-    private void OnReleaseOutsideZone()
+    private IEnumerator MoveCreamToPosition(Vector3 from, Vector3 to, float duration, System.Action onComplete)
     {
-        Debug.Log("Released outside face zone - cancelling");
-        OnMakeupCancelled?.Invoke();
-        ReturnToStartPosition();
+        float elapsed = 0;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            creamObject.position = Vector3.Lerp(from, to, t);
+            yield return null;
+        }
+        creamObject.position = to;
+        onComplete?.Invoke();
     }
 
-    private void AnimateApply(System.Action onComplete)
+    private IEnumerator MoveToPosition(Vector3 from, Vector3 to, float duration, System.Action onComplete)
     {
-        GameManager.Instance?.SetState(GameManager.GameState.ApplyingMakeup);
-
-        LeanTween.scale(handRect, Vector3.one * 1.2f, animationDuration * 0.5f)
-            .setEase(LeanTweenType.easeOutQuad)
-            .setOnComplete(() =>
-            {
-                LeanTween.scale(handRect, Vector3.one, animationDuration * 0.5f)
-                    .setOnComplete(() => onComplete?.Invoke());
-            });
+        float elapsed = 0;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            transform.position = Vector3.Lerp(from, to, t);
+            yield return null;
+        }
+        transform.position = to;
+        onComplete?.Invoke();
     }
 
-    private void ReturnToStartPosition()
+    private IEnumerator ScaleAnimation(float targetScale, float duration)
     {
-        GameManager.Instance?.SetState(GameManager.GameState.Returning);
-        SetState(HandState.Returning);
+        Vector3 startScale = transform.localScale;
+        Vector3 endScale = Vector3.one * targetScale;
+        float elapsed = 0;
 
-        LeanTween.move(handRect, startPosition, returnDuration)
-            .setEase(LeanTweenType.easeOutQuad)
-            .setOnComplete(() =>
-            {
-                SetState(HandState.Idle);
-                GameManager.Instance?.SetState(GameManager.GameState.Playing);
-            });
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            transform.localScale = Vector3.Lerp(startScale, endScale, t);
+            yield return null;
+        }
+        transform.localScale = endScale;
     }
 
-    /// <summary>
-    /// Анимация взятия предмета рукой
-    /// </summary>
-    public void AnimateTakeItem(Vector2 itemPosition, System.Action onComplete = null)
+    private Vector3 GetMiddlePosition()
     {
-        // Плавно двигаем руку к предмету
-        LeanTween.move(handRect, itemPosition, 0.2f)
-            .setEase(LeanTweenType.easeOutQuad)
-            .setOnComplete(() =>
-            {
-                // Анимация "взятия" предмета
-                LeanTween.scale(handRect, Vector3.one * 0.9f, 0.05f)
-                    .setEase(LeanTweenType.easeOutQuad)
-                    .setOnComplete(() =>
-                    {
-                        LeanTween.scale(handRect, Vector3.one, 0.05f)
-                            .setOnComplete(() =>
-                            {
-                                onComplete?.Invoke();
-                            });
-                    });
-            });
+        float x = (creamStartPosition.x + 0) / 2 + 0.5f;
+        float y = (creamStartPosition.y + 0) / 2 + 0.5f;
+        return new Vector3(x, y, 0);
     }
 
-    /// <summary>
-    /// Переместить руку в указанную позицию
-    /// </summary>
-    public void MoveToPosition(Vector2 position, System.Action onComplete = null)
+    private void SetHandSprite(Sprite sprite)
     {
-        LeanTween.move(handRect, position, animationDuration)
-            .setEase(LeanTweenType.easeOutQuad)
-            .setOnComplete(() => onComplete?.Invoke());
-    }
-
-    public void SetState(HandState newState)
-    {
-        currentState = newState;
-        OnStateChanged?.Invoke(currentState);
-        Debug.Log($"Hand state changed to: {currentState}");
+        if (handSprite != null && sprite != null)
+            handSprite.sprite = sprite;
     }
 
     public void ResetToIdle()
     {
-        LeanTween.cancel(handRect.gameObject);
-        handRect.anchoredPosition = startPosition;
-        handRect.localScale = Vector3.one;
-        SetState(HandState.Idle);
+        StopAllCoroutines();
+        StartCoroutine(ReturnCreamToStart());
     }
-
-    public HandState GetCurrentState() => currentState;
 }

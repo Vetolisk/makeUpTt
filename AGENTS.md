@@ -2,7 +2,7 @@
 - Project name: makeUpTt
 - Unity version: Unity 6000.3.11f1
 - Active game object:
-  - Name: FaceZone
+  - Name: eyeshadow_color_01_0
   - Tag: Untagged
   - Layer: Default
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->

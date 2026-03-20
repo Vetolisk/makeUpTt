@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: b665b7f7ab3d14442b995346e2fbb6f5
+guid: 1421c6ed95a9cbb4f94938c2a02b1b41
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8384921574167642751
-    second: blush_brush_0
+      213: 8071423555603986821
+    second: Untitled2_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,12 +46,12 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 400
+  spritePixelsToUnits: 200
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -139,13 +139,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: blush_brush_0
+      name: Untitled2_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 229
-        height: 494
+        x: 98
+        y: 212
+        width: 209
+        height: 385
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -154,8 +154,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f7285c91fb93d5470800000000000000
-      internalID: 8384921574167642751
+      spriteID: 589fe77a5f4730070800000000000000
+      internalID: 8071423555603986821
       vertices: []
       indices: 
       edges: []
@@ -164,7 +164,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -174,7 +174,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      blush_brush_0: 8384921574167642751
+      Untitled2_0: 8071423555603986821
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

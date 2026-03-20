@@ -2,89 +2,50 @@ using UnityEngine;
 
 public class FaceController : MonoBehaviour
 {
-    [Header("Sprite Renderers")]
-    [SerializeField] private SpriteRenderer bodyRenderer;   // тело (чистое лицо)
-    [SerializeField] private SpriteRenderer acneRenderer;   // прыщи
+    [Header("Основной спрайт персонажа")]
+    [SerializeField] private SpriteRenderer characterSprite;
 
-    [Header("Makeup Overlays (опционально)")]
-    [SerializeField] private GameObject eyeshadowOverlay;   // тени
-    [SerializeField] private GameObject lipstickOverlay;    // помада
+    [Header("Спрайт прыщей (отдельно)")]
+    [SerializeField] private SpriteRenderer acneSprite;
 
-    private bool hasAcne = true;
-    private bool hasShadow = false;
-    private bool hasLipstick = false;
+    [Header("Настройки")]
+    [SerializeField] private bool hasAcne = true;
 
-    private void Start()
+    void Start()
     {
         // Находим компоненты, если не назначены
-        if (bodyRenderer == null)
-            bodyRenderer = transform.Find("Body")?.GetComponent<SpriteRenderer>();
-        if (acneRenderer == null)
-            acneRenderer = transform.Find("Acne")?.GetComponent<SpriteRenderer>();
+        if (characterSprite == null)
+            characterSprite = GetComponent<SpriteRenderer>();
 
-        // Начальное состояние: прыщи включены
-        SetAcneVisible(true);
+        if (acneSprite == null)
+        {
+            // Ищем дочерний объект с именем "Acne"
+            Transform acneTransform = transform.Find("Acne");
+            if (acneTransform != null)
+                acneSprite = acneTransform.GetComponent<SpriteRenderer>();
+        }
 
-        // Выключаем макияж
-        if (eyeshadowOverlay != null) eyeshadowOverlay.SetActive(false);
-        if (lipstickOverlay != null) lipstickOverlay.SetActive(false);
+        // Устанавливаем начальное состояние
+        SetAcneVisible(hasAcne);
     }
 
-    // Крем — убираем прыщи
-    public void ApplyCream()
+    // Убираем прыщи
+    public void RemoveAcne()
     {
         if (!hasAcne) return;
 
         hasAcne = false;
         SetAcneVisible(false);
-        Debug.Log("Cream applied - acne removed!");
+        Debug.Log("Прыщи исчезли!");
     }
 
-    // Тени
-    public void ApplyShadow()
-    {
-        if (hasShadow) return;
-
-        hasShadow = true;
-        if (eyeshadowOverlay != null)
-            eyeshadowOverlay.SetActive(true);
-        Debug.Log("Shadow applied!");
-    }
-
-    // Помада
-    public void ApplyLipstick()
-    {
-        if (hasLipstick) return;
-
-        hasLipstick = true;
-        if (lipstickOverlay != null)
-            lipstickOverlay.SetActive(true);
-        Debug.Log("Lipstick applied!");
-    }
-
-    // Спонжик — стираем всё
-    public void ClearMakeup()
-    {
-        hasAcne = true;
-        hasShadow = false;
-        hasLipstick = false;
-
-        SetAcneVisible(true);
-
-        if (eyeshadowOverlay != null) eyeshadowOverlay.SetActive(false);
-        if (lipstickOverlay != null) lipstickOverlay.SetActive(false);
-
-        Debug.Log("All makeup cleared!");
-    }
-
+    // Показать/скрыть прыщи
     private void SetAcneVisible(bool visible)
     {
-        if (acneRenderer != null)
-            acneRenderer.enabled = visible;
+        if (acneSprite != null)
+            acneSprite.enabled = visible;
     }
 
-    // Проверка состояний (для других скриптов)
+    // Проверка, есть ли прыщи
     public bool HasAcne() => hasAcne;
-    public bool HasShadow() => hasShadow;
-    public bool HasLipstick() => hasLipstick;
 }
