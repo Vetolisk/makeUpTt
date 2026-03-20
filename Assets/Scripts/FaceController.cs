@@ -2,60 +2,89 @@ using UnityEngine;
 
 public class FaceController : MonoBehaviour
 {
-    [Header("Face Parts")]
-    [SerializeField] private SpriteRenderer faceRenderer;
-    [SerializeField] private SpriteRenderer eyesRenderer;
-    [SerializeField] private SpriteRenderer lipsRenderer;
+    [Header("Sprite Renderers")]
+    [SerializeField] private SpriteRenderer bodyRenderer;   // тело (чистое лицо)
+    [SerializeField] private SpriteRenderer acneRenderer;   // прыщи
 
-    [Header("Sprites")]
-    [SerializeField] private Sprite faceWithAcne;
-    [SerializeField] private Sprite faceWithoutAcne;
-    [SerializeField] private Sprite eyesWithoutShadow;
-    [SerializeField] private Sprite eyesWithShadow;
-    [SerializeField] private Sprite lipsWithoutLipstick;
-    [SerializeField] private Sprite lipsWithLipstick;
+    [Header("Makeup Overlays (опционально)")]
+    [SerializeField] private GameObject eyeshadowOverlay;   // тени
+    [SerializeField] private GameObject lipstickOverlay;    // помада
 
-    private bool hasMakeup = false;
+    private bool hasAcne = true;
+    private bool hasShadow = false;
+    private bool hasLipstick = false;
 
+    private void Start()
+    {
+        // Находим компоненты, если не назначены
+        if (bodyRenderer == null)
+            bodyRenderer = transform.Find("Body")?.GetComponent<SpriteRenderer>();
+        if (acneRenderer == null)
+            acneRenderer = transform.Find("Acne")?.GetComponent<SpriteRenderer>();
+
+        // Начальное состояние: прыщи включены
+        SetAcneVisible(true);
+
+        // Выключаем макияж
+        if (eyeshadowOverlay != null) eyeshadowOverlay.SetActive(false);
+        if (lipstickOverlay != null) lipstickOverlay.SetActive(false);
+    }
+
+    // Крем — убираем прыщи
     public void ApplyCream()
     {
-        if (faceRenderer != null && faceWithAcne != null && faceWithoutAcne != null)
-        {
-            faceRenderer.sprite = faceWithoutAcne;
-            Debug.Log("Cream applied - acne removed!");
-        }
+        if (!hasAcne) return;
+
+        hasAcne = false;
+        SetAcneVisible(false);
+        Debug.Log("Cream applied - acne removed!");
     }
 
+    // Тени
     public void ApplyShadow()
     {
-        if (eyesRenderer != null && eyesWithoutShadow != null && eyesWithShadow != null)
-        {
-            eyesRenderer.sprite = eyesWithShadow;
-            Debug.Log("Shadow applied!");
-        }
+        if (hasShadow) return;
+
+        hasShadow = true;
+        if (eyeshadowOverlay != null)
+            eyeshadowOverlay.SetActive(true);
+        Debug.Log("Shadow applied!");
     }
 
+    // Помада
     public void ApplyLipstick()
     {
-        if (lipsRenderer != null && lipsWithoutLipstick != null && lipsWithLipstick != null)
-        {
-            lipsRenderer.sprite = lipsWithLipstick;
-            Debug.Log("Lipstick applied!");
-        }
+        if (hasLipstick) return;
+
+        hasLipstick = true;
+        if (lipstickOverlay != null)
+            lipstickOverlay.SetActive(true);
+        Debug.Log("Lipstick applied!");
     }
 
+    // Спонжик — стираем всё
     public void ClearMakeup()
     {
-        if (faceRenderer != null && faceWithAcne != null)
-            faceRenderer.sprite = faceWithAcne;
+        hasAcne = true;
+        hasShadow = false;
+        hasLipstick = false;
 
-        if (eyesRenderer != null && eyesWithoutShadow != null)
-            eyesRenderer.sprite = eyesWithoutShadow;
+        SetAcneVisible(true);
 
-        if (lipsRenderer != null && lipsWithoutLipstick != null)
-            lipsRenderer.sprite = lipsWithoutLipstick;
+        if (eyeshadowOverlay != null) eyeshadowOverlay.SetActive(false);
+        if (lipstickOverlay != null) lipstickOverlay.SetActive(false);
 
-        hasMakeup = false;
         Debug.Log("All makeup cleared!");
     }
+
+    private void SetAcneVisible(bool visible)
+    {
+        if (acneRenderer != null)
+            acneRenderer.enabled = visible;
+    }
+
+    // Проверка состояний (для других скриптов)
+    public bool HasAcne() => hasAcne;
+    public bool HasShadow() => hasShadow;
+    public bool HasLipstick() => hasLipstick;
 }
