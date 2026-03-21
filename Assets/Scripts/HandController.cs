@@ -23,20 +23,26 @@ public class HandController : MonoBehaviour
     [Header("Lipstick Settings")]
     [SerializeField] private Transform lipstickInHand;
 
+    // Lipstick variables
+    private Transform currentLipstickObject;
+    private Transform currentLipstickParent;      // родитель помады (важно!)
+    private Vector3 currentLipstickLocalPosition; // локальная позиция в родителе
+    private Vector3 currentLipstickLocalScale;    // локальный масштаб
+    private Vector3 currentLipstickStartPosition; // мировая позиция
+    private Sprite currentLipstickSprite;
+    private bool holdingLipstick = false;
+
     private Vector3 startPosition;
     private Vector3 creamStartPosition;
     private Vector3 brushStartPosition;
 
     private bool holdingCream = false;
     private bool holdingBrush = false;
-    private bool holdingLipstick = false;
     private bool isDragging = false;
 
     private Color currentBrushColor = Color.white;
     private Sprite currentShadowSprite;
-    private Sprite currentLipstickSprite;
-    private Transform currentLipstickObject;
-    private Vector3 currentLipstickStartPosition;
+
 
     void Start()
     {
@@ -302,8 +308,18 @@ public class HandController : MonoBehaviour
         }
 
         currentLipstickObject = lipstickObject;
+
+        // СОХРАНЯЕМ РОДИТЕЛЯ (из какого панельки взяли)
+        currentLipstickParent = lipstickObject.parent;
+
+        // Сохраняем локальную позицию и масштаб относительно родителя
+        currentLipstickLocalPosition = lipstickObject.localPosition;
+        currentLipstickLocalScale = lipstickObject.localScale;
+
+        // Сохраняем мировую позицию для анимации
         currentLipstickStartPosition = lipstickObject.position;
         currentLipstickSprite = lipstickSprite;
+
         StartCoroutine(TakeLipstickAnimation());
     }
 
@@ -363,22 +379,27 @@ public class HandController : MonoBehaviour
 
         if (currentLipstickObject != null)
         {
-            currentLipstickObject.SetParent(null);
+            // ВОЗВРАЩАЕМ К СОХРАНЕННОМУ РОДИТЕЛЮ
+            currentLipstickObject.SetParent(currentLipstickParent);
 
+            // Восстанавливаем локальную позицию и масштаб
+            currentLipstickObject.localPosition = currentLipstickLocalPosition;
+            currentLipstickObject.localScale = currentLipstickLocalScale;
+
+            // Включаем коллайдер обратно
             Collider2D lipstickCollider = currentLipstickObject.GetComponent<Collider2D>();
             if (lipstickCollider != null)
                 lipstickCollider.enabled = true;
 
-            yield return StartCoroutine(MoveObjectToPosition(currentLipstickObject, currentLipstickObject.position, currentLipstickStartPosition, 0.3f, null));
-            currentLipstickObject.localScale = Vector3.one;
+            Debug.Log($"Lipstick returned to parent: {currentLipstickParent.name}, position: {currentLipstickLocalPosition}");
 
             currentLipstickObject = null;
         }
 
+        // Возвращаем руку на место
         yield return StartCoroutine(MoveToPosition(transform.position, startPosition, 0.3f, null));
 
         SetHandSprite(defaultHand);
-
         currentLipstickSprite = null;
     }
 

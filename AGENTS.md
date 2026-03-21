@@ -2,7 +2,7 @@
 - Project name: makeUpTt
 - Unity version: Unity 6000.3.11f1
 - Active game object:
-  - Name: GameCanvasOBJ
-  - Tag: Untagged
-  - Layer: UI
+  - Name: Cream
+  - Tag: Cream
+  - Layer: Default
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->
