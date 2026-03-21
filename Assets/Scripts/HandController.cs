@@ -429,7 +429,7 @@ public class HandController : MonoBehaviour
             StartCoroutine(ReturnCreamToStart());
         else if (holdingBrush)
             StartCoroutine(ReturnBrushToStart());
-        else if (holdingLipstick)
+        else if (holdingLipstick && currentLipstickObject != null)
             StartCoroutine(ReturnLipstickToStart());
     }
 }

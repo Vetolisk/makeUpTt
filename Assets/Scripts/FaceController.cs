@@ -6,7 +6,7 @@ public class FaceController : MonoBehaviour
     [SerializeField] private SpriteRenderer characterSprite;
     [SerializeField] private SpriteRenderer acneSprite;
     [SerializeField] private SpriteRenderer eyeshadowSprite;
-    [SerializeField] private SpriteRenderer lipsSprite;  // добавили губы
+    [SerializeField] private SpriteRenderer lipsSprite;
 
     private bool hasAcne = true;
     private bool hasShadow = false;
@@ -36,8 +36,6 @@ public class FaceController : MonoBehaviour
             Transform lipsTransform = transform.Find("Lips");
             if (lipsTransform != null)
                 lipsSprite = lipsTransform.GetComponent<SpriteRenderer>();
-            else
-                Debug.LogWarning("Lips object not found on Character!");
         }
 
         SetAcneVisible(true);
@@ -59,17 +57,8 @@ public class FaceController : MonoBehaviour
 
     public void ApplyShadow(Sprite shadowSprite)
     {
-        if (eyeshadowSprite == null)
-        {
-            Debug.LogError("eyeshadowSprite is NULL!");
-            return;
-        }
-
-        if (shadowSprite == null)
-        {
-            Debug.LogError("shadowSprite is NULL!");
-            return;
-        }
+        if (eyeshadowSprite == null) return;
+        if (shadowSprite == null) return;
 
         eyeshadowSprite.sprite = shadowSprite;
         eyeshadowSprite.enabled = true;
@@ -77,28 +66,36 @@ public class FaceController : MonoBehaviour
         Debug.Log("Shadow applied");
     }
 
-    // НОВЫЙ МЕТОД для помады
     public void ApplyLipstick(Sprite lipstickSprite)
     {
-        Debug.Log("=== ApplyLipstick START ===");
+        if (lipsSprite == null) return;
 
-        if (lipsSprite == null)
-        {
-            Debug.LogError("lipsSprite is NULL! Create a child object named 'Lips' on Character.");
-            return;
-        }
+        if (lipstickSprite != null)
+            lipsSprite.sprite = lipstickSprite;
 
-        if (lipstickSprite == null)
-        {
-            Debug.LogError("lipstickSprite is NULL!");
-            return;
-        }
-
-        lipsSprite.sprite = lipstickSprite;
         lipsSprite.enabled = true;
         hasLipstick = true;
+        Debug.Log("Lipstick applied");
+    }
 
-        Debug.Log("Lipstick applied. Sprite: " + lipstickSprite.name);
+    // Метод для стирания всего макияжа
+    public void ClearAllMakeup()
+    {
+        // Возвращаем прыщи
+        SetAcneVisible(true);
+        hasAcne = true;
+
+        // Выключаем тени
+        if (eyeshadowSprite != null)
+            eyeshadowSprite.enabled = false;
+        hasShadow = false;
+
+        // Выключаем помаду
+        if (lipsSprite != null)
+            lipsSprite.enabled = false;
+        hasLipstick = false;
+
+        Debug.Log("All makeup cleared by sponge");
     }
 
     public void ClearShadow()
@@ -121,22 +118,6 @@ public class FaceController : MonoBehaviour
             hasLipstick = false;
             Debug.Log("Lipstick cleared");
         }
-    }
-
-    public void ClearAllMakeup()
-    {
-        SetAcneVisible(true);
-
-        if (eyeshadowSprite != null)
-            eyeshadowSprite.enabled = false;
-
-        if (lipsSprite != null)
-            lipsSprite.enabled = false;
-
-        hasAcne = true;
-        hasShadow = false;
-        hasLipstick = false;
-        Debug.Log("All makeup cleared");
     }
 
     private void SetAcneVisible(bool visible)
