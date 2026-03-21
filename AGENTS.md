@@ -2,7 +2,7 @@
 - Project name: makeUpTt
 - Unity version: Unity 6000.3.11f1
 - Active game object:
-  - Name: TMP SubMeshUI [LiberationSans SDF Material + LiberationSans SDF Atlas]
+  - Name: GameCanvasOBJ
   - Tag: Untagged
   - Layer: UI
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->
