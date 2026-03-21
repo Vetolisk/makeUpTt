@@ -7,6 +7,9 @@ public class DragHandler : MonoBehaviour
     private Vector3 offset;
     private bool isDragging = false;
 
+    [Header("Settings")]
+    [SerializeField] private float padding = 0.5f;
+
     void Start()
     {
         mainCamera = Camera.main;
@@ -24,7 +27,6 @@ public class DragHandler : MonoBehaviour
         isDragging = true;
 
         handController.StartDrag();
-        Debug.Log("Drag started");
     }
 
     void OnMouseDrag()
@@ -35,7 +37,15 @@ public class DragHandler : MonoBehaviour
 
         Vector3 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
         mousePos.z = 0;
-        transform.position = mousePos + offset;
+        Vector3 newPosition = mousePos + offset;
+
+        // Ограничиваем движение границами экрана
+        if (ScreenBounds.Instance != null)
+        {
+            newPosition = ScreenBounds.Instance.ClampPosition(newPosition, padding);
+        }
+
+        transform.position = newPosition;
     }
 
     void OnMouseUp()
@@ -50,6 +60,5 @@ public class DragHandler : MonoBehaviour
         fakeEvent.position = Input.mousePosition;
 
         handController.EndDrag(fakeEvent);
-        Debug.Log("Drag ended");
     }
 }

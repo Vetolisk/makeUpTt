@@ -2,7 +2,7 @@
 - Project name: makeUpTt
 - Unity version: Unity 6000.3.11f1
 - Active game object:
-  - Name: Loofah
+  - Name: TMP SubMeshUI [LiberationSans SDF Material + LiberationSans SDF Atlas]
   - Tag: Untagged
-  - Layer: Default
+  - Layer: UI
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->

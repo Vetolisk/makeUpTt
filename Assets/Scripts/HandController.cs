@@ -35,8 +35,8 @@ public class HandController : MonoBehaviour
     private Color currentBrushColor = Color.white;
     private Sprite currentShadowSprite;
     private Sprite currentLipstickSprite;
-    private Transform currentLipstickObject; // текущая помада, которую взяли
-    private Vector3 currentLipstickStartPosition; // позиция помады
+    private Transform currentLipstickObject;
+    private Vector3 currentLipstickStartPosition;
 
     void Start()
     {
@@ -65,7 +65,7 @@ public class HandController : MonoBehaviour
         {
             GameObject anchor = new GameObject("LipstickInHand");
             anchor.transform.SetParent(transform);
-            anchor.transform.localPosition = new Vector3(-0.32f, 0.81f, 0);
+            anchor.transform.localPosition = new Vector3(-0.38f, 0.737f, 0);
             lipstickInHand = anchor.transform;
         }
 
@@ -82,6 +82,9 @@ public class HandController : MonoBehaviour
     public bool IsHoldingCream() => holdingCream;
     public bool IsHoldingBrush() => holdingBrush;
     public bool IsHoldingLipstick() => holdingLipstick;
+
+    // Проверка, занята ли рука
+    public bool IsHandBusy() => holdingCream || holdingBrush || holdingLipstick;
 
     public void StartDrag()
     {
@@ -119,6 +122,13 @@ public class HandController : MonoBehaviour
     // ==================== CREAM METHODS ====================
     public void TakeCream()
     {
+        // Проверяем, не занята ли рука
+        if (IsHandBusy())
+        {
+            Debug.Log("Hand is busy with another item!");
+            return;
+        }
+
         StartCoroutine(TakeCreamAnimation());
     }
 
@@ -134,7 +144,7 @@ public class HandController : MonoBehaviour
         if (creamObject != null)
         {
             creamObject.SetParent(transform);
-            creamObject.localPosition = new Vector3(-0.319f, 0.619f, 0);
+            creamObject.localPosition = new Vector3(-0.328f, 0.651f, 0);
             creamObject.localScale = Vector3.one * 0.8f;
 
             Collider2D creamCollider = creamObject.GetComponent<Collider2D>();
@@ -191,6 +201,13 @@ public class HandController : MonoBehaviour
     // ==================== BRUSH METHODS ====================
     public void PickColor(Color color, Sprite shadowSprite, Vector3 colorPosition)
     {
+        // Проверяем, не занята ли рука
+        if (IsHandBusy())
+        {
+            Debug.Log("Hand is busy with another item!");
+            return;
+        }
+
         currentBrushColor = color;
         currentShadowSprite = shadowSprite;
         StartCoroutine(PickColorAnimation(colorPosition));
@@ -228,13 +245,17 @@ public class HandController : MonoBehaviour
     private IEnumerator ApplyShadowAndReturn()
     {
         Vector3 originalPos = transform.position;
-        Vector3 forwardPos = originalPos + new Vector3(0, 0.3f, 0);
 
-        yield return StartCoroutine(MoveToPosition(originalPos, forwardPos, 0.1f, null));
-        yield return StartCoroutine(MoveToPosition(forwardPos, originalPos, 0.1f, null));
+        Vector3 rightPos = originalPos + new Vector3(0.35f, 0, 0);
+        Vector3 leftPos = originalPos + new Vector3(-0.35f, 0, 0);
 
-        yield return StartCoroutine(ScaleAnimation(1.2f, 0.1f));
-        yield return StartCoroutine(ScaleAnimation(1f, 0.1f));
+        yield return StartCoroutine(MoveToPosition(originalPos, rightPos, 0.15f, null));
+        yield return StartCoroutine(MoveToPosition(rightPos, leftPos, 0.3f, null));
+        yield return StartCoroutine(MoveToPosition(leftPos, rightPos, 0.3f, null));
+        yield return StartCoroutine(MoveToPosition(rightPos, originalPos, 0.15f, null));
+
+        yield return StartCoroutine(ScaleAnimation(1.15f, 0.12f));
+        yield return StartCoroutine(ScaleAnimation(1f, 0.12f));
 
         if (faceController != null && currentShadowSprite != null)
             faceController.ApplyShadow(currentShadowSprite);
@@ -271,9 +292,15 @@ public class HandController : MonoBehaviour
     }
 
     // ==================== LIPSTICK METHODS ====================
-    // Метод для взятия помады - передаем объект помады
     public void TakeLipstick(Transform lipstickObject, Sprite lipstickSprite = null)
     {
+        // Проверяем, не занята ли рука
+        if (IsHandBusy())
+        {
+            Debug.Log("Hand is busy with another item!");
+            return;
+        }
+
         currentLipstickObject = lipstickObject;
         currentLipstickStartPosition = lipstickObject.position;
         currentLipstickSprite = lipstickSprite;
@@ -282,18 +309,13 @@ public class HandController : MonoBehaviour
 
     private IEnumerator TakeLipstickAnimation()
     {
-        Debug.Log("Taking lipstick from: " + currentLipstickObject.name);
-
-        // Двигаем руку к помаде
         yield return StartCoroutine(MoveToPosition(transform.position, currentLipstickStartPosition, 0.2f, null));
 
-        // Анимация взятия
         yield return StartCoroutine(ScaleAnimation(0.8f, 0.05f));
         yield return StartCoroutine(ScaleAnimation(1f, 0.05f));
 
         holdingLipstick = true;
 
-        // Прикрепляем помаду к руке
         if (currentLipstickObject != null)
         {
             currentLipstickObject.SetParent(transform);
@@ -308,11 +330,8 @@ public class HandController : MonoBehaviour
             Collider2D lipstickCollider = currentLipstickObject.GetComponent<Collider2D>();
             if (lipstickCollider != null)
                 lipstickCollider.enabled = false;
-
-            Debug.Log("Lipstick attached to hand. Parent: " + currentLipstickObject.parent.name);
         }
 
-        // Двигаем руку в промежуточную позицию
         Vector3 middlePos = GetMiddlePosition(currentLipstickStartPosition);
         yield return StartCoroutine(MoveToPosition(transform.position, middlePos, 0.2f, null));
 
@@ -429,7 +448,7 @@ public class HandController : MonoBehaviour
             StartCoroutine(ReturnCreamToStart());
         else if (holdingBrush)
             StartCoroutine(ReturnBrushToStart());
-        else if (holdingLipstick && currentLipstickObject != null)
+        else if (holdingLipstick)
             StartCoroutine(ReturnLipstickToStart());
     }
 }

@@ -40,6 +40,15 @@ public class ColorPicker : MonoBehaviour
             return;
         }
 
+        if (handController == null) return;
+
+        // Проверка, не занята ли рука
+        if (handController.IsHandBusy())
+        {
+            Debug.Log("Hand is busy with another item!");
+            return;
+        }
+
         Debug.Log("Picking color with sprite: " + eyeshadowSprite.name);
         handController.PickColor(brushColor, eyeshadowSprite, transform.position);
     }

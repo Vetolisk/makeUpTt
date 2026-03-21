@@ -27,6 +27,15 @@ public class LipstickItem : MonoBehaviour
         }
 
         Debug.Log("Lipstick clicked: " + gameObject.name);
+
+        if (handController == null) return;
+
+        // Проверка, не занята ли рука
+        if (handController.IsHandBusy())
+        {
+            Debug.Log("Hand is busy with another item!");
+            return;
+        }
         handController.TakeLipstick(transform, lipstickSprite);
     }
 }

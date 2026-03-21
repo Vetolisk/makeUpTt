@@ -23,6 +23,16 @@ public class CreamItem : MonoBehaviour
             return;
         }
 
+        if (handController == null) return;
+
+        // Проверка, не занята ли рука
+        if (handController.IsHandBusy())
+        {
+            Debug.Log("Hand is busy with another item!");
+            return;
+        }
+
+
         Debug.Log("Cream clicked");
         handController.TakeCream();
     }
