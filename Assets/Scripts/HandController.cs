@@ -114,7 +114,7 @@ public class HandController : MonoBehaviour
         if (creamObject != null)
         {
             creamObject.SetParent(transform);
-            creamObject.localPosition = new Vector3(0.5f, -0.2f, 0);
+            creamObject.localPosition = new Vector3(-0.308f, 0.608f, 0);
             creamObject.localScale = Vector3.one * 0.8f;
 
             Collider2D creamCollider = creamObject.GetComponent<Collider2D>();

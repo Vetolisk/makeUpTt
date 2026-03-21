@@ -13,10 +13,15 @@ public class ColorPicker : MonoBehaviour
     {
         if (handController == null)
             handController = FindObjectOfType<HandController>();
+
+        if (eyeshadowSprite == null)
+            Debug.LogError("Eyeshadow sprite not assigned in ColorPicker on " + gameObject.name);
     }
 
     void OnMouseDown()
     {
+        Debug.Log("ColorPicker clicked: " + gameObject.name);
+
         if (handController == null)
         {
             Debug.LogError("HandController not found");
@@ -29,6 +34,13 @@ public class ColorPicker : MonoBehaviour
             return;
         }
 
+        if (eyeshadowSprite == null)
+        {
+            Debug.LogError("Cannot pick color: eyeshadowSprite is null in " + gameObject.name);
+            return;
+        }
+
+        Debug.Log("Picking color with sprite: " + eyeshadowSprite.name);
         handController.PickColor(brushColor, eyeshadowSprite, transform.position);
     }
 }

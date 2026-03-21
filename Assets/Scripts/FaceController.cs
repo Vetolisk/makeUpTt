@@ -27,10 +27,18 @@ public class FaceController : MonoBehaviour
             Transform shadowTransform = transform.Find("Eyeshadow");
             if (shadowTransform != null)
                 eyeshadowSprite = shadowTransform.GetComponent<SpriteRenderer>();
+            else
+                Debug.LogError("Eyeshadow object not found on Character!");
         }
 
         SetAcneVisible(true);
-        SetEyeshadowVisible(false);
+
+        // ПРОВЕРКА: принудительно выключаем тени
+        if (eyeshadowSprite != null)
+        {
+            eyeshadowSprite.enabled = false;
+            Debug.Log("Eyeshadow disabled at start. Current enabled: " + eyeshadowSprite.enabled);
+        }
     }
 
     public void RemoveAcne()
@@ -43,20 +51,43 @@ public class FaceController : MonoBehaviour
 
     public void ApplyShadow(Sprite shadowSprite)
     {
-        if (eyeshadowSprite != null && shadowSprite != null)
+        Debug.Log("=== ApplyShadow START ===");
+
+        if (eyeshadowSprite == null)
         {
-            eyeshadowSprite.sprite = shadowSprite;
-            SetEyeshadowVisible(true);
-            hasShadow = true;
-            Debug.Log("Shadow applied");
+            Debug.LogError("eyeshadowSprite is NULL!");
+            return;
         }
+
+        if (shadowSprite == null)
+        {
+            Debug.LogError("shadowSprite is NULL!");
+            return;
+        }
+
+        // Меняем спрайт
+        eyeshadowSprite.sprite = shadowSprite;
+        Debug.Log("Sprite changed to: " + shadowSprite.name);
+
+        // ВКЛЮЧАЕМ объект
+        eyeshadowSprite.enabled = true;
+        Debug.Log("Eyeshadow enabled set to: " + eyeshadowSprite.enabled);
+
+        hasShadow = true;
+
+        // ПРОВЕРКА: принудительно проверяем
+        if (eyeshadowSprite.enabled)
+            Debug.Log("SUCCESS: Eyeshadow is now visible!");
+        else
+            Debug.LogError("FAILED: Eyeshadow is still disabled!");
     }
 
     public void ClearShadow()
     {
         if (hasShadow)
         {
-            SetEyeshadowVisible(false);
+            if (eyeshadowSprite != null)
+                eyeshadowSprite.enabled = false;
             hasShadow = false;
             Debug.Log("Shadow cleared");
         }
@@ -65,7 +96,8 @@ public class FaceController : MonoBehaviour
     public void ClearAllMakeup()
     {
         SetAcneVisible(true);
-        SetEyeshadowVisible(false);
+        if (eyeshadowSprite != null)
+            eyeshadowSprite.enabled = false;
         hasAcne = true;
         hasShadow = false;
         Debug.Log("All makeup cleared");
@@ -75,12 +107,6 @@ public class FaceController : MonoBehaviour
     {
         if (acneSprite != null)
             acneSprite.enabled = visible;
-    }
-
-    private void SetEyeshadowVisible(bool visible)
-    {
-        if (eyeshadowSprite != null)
-            eyeshadowSprite.enabled = visible;
     }
 
     public bool HasAcne() => hasAcne;
