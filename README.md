@@ -38,24 +38,27 @@ LeanTween
 
 ###  Основные классы
 
+### Главный контроллер руки
+
 HandController
 
 Главный контроллер руки. Управляет взятием предметов, перетаскиванием и нанесением макияжа.
 
-public void TakeCream()           // Взять крем
-public void PickColor()           // Взять кисточку с цветом
-public void TakeLipstick()        // Взять помаду
-public bool IsHandBusy()          // Проверка, занята ли рука
-
+```csharp
+public void TakeCream()     // Взять крем
+public void PickColor()     // Взять кисточку с цветом  
+public void TakeLipstick()  // Взять помаду
+public bool IsHandBusy()    // Проверка, занята ли рука
+```
 
 FaceController
 Управляет внешностью персонажа.
-
+```csharp
 public void RemoveAcne()          // Убрать прыщи
 public void ApplyShadow()         // Нанести тени
 public void ApplyLipstick()       // Нанести помаду
 public void ClearAllMakeup()      // Стереть весь макияж
-
+```
 DragHandler
 Обрабатывает перетаскивание руки с ограничением по границам экрана.
 
