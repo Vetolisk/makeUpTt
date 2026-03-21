@@ -16,7 +16,7 @@ public class DragHandler : MonoBehaviour
     void OnMouseDown()
     {
         if (handController == null) return;
-        if (!handController.IsHoldingCream()) return;
+        if (!handController.IsHoldingCream() && !handController.IsHoldingBrush()) return;
 
         Vector3 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
         mousePos.z = 0;
@@ -31,7 +31,7 @@ public class DragHandler : MonoBehaviour
     {
         if (!isDragging) return;
         if (handController == null) return;
-        if (!handController.IsHoldingCream()) return;
+        if (!handController.IsHoldingCream() && !handController.IsHoldingBrush()) return;
 
         Vector3 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
         mousePos.z = 0;
@@ -42,7 +42,7 @@ public class DragHandler : MonoBehaviour
     {
         if (!isDragging) return;
         if (handController == null) return;
-        if (!handController.IsHoldingCream()) return;
+        if (!handController.IsHoldingCream() && !handController.IsHoldingBrush()) return;
 
         isDragging = false;
 

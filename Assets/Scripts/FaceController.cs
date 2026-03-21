@@ -2,50 +2,87 @@ using UnityEngine;
 
 public class FaceController : MonoBehaviour
 {
-    [Header("Основной спрайт персонажа")]
+    [Header("Sprite Renderers")]
     [SerializeField] private SpriteRenderer characterSprite;
-
-    [Header("Спрайт прыщей (отдельно)")]
     [SerializeField] private SpriteRenderer acneSprite;
+    [SerializeField] private SpriteRenderer eyeshadowSprite;
 
-    [Header("Настройки")]
-    [SerializeField] private bool hasAcne = true;
+    private bool hasAcne = true;
+    private bool hasShadow = false;
 
     void Start()
     {
-        // Находим компоненты, если не назначены
         if (characterSprite == null)
             characterSprite = GetComponent<SpriteRenderer>();
 
         if (acneSprite == null)
         {
-            // Ищем дочерний объект с именем "Acne"
             Transform acneTransform = transform.Find("Acne");
             if (acneTransform != null)
                 acneSprite = acneTransform.GetComponent<SpriteRenderer>();
         }
 
-        // Устанавливаем начальное состояние
-        SetAcneVisible(hasAcne);
+        if (eyeshadowSprite == null)
+        {
+            Transform shadowTransform = transform.Find("Eyeshadow");
+            if (shadowTransform != null)
+                eyeshadowSprite = shadowTransform.GetComponent<SpriteRenderer>();
+        }
+
+        SetAcneVisible(true);
+        SetEyeshadowVisible(false);
     }
 
-    // Убираем прыщи
     public void RemoveAcne()
     {
         if (!hasAcne) return;
-
         hasAcne = false;
         SetAcneVisible(false);
-        Debug.Log("Прыщи исчезли!");
+        Debug.Log("Acne removed");
     }
 
-    // Показать/скрыть прыщи
+    public void ApplyShadow(Sprite shadowSprite)
+    {
+        if (eyeshadowSprite != null && shadowSprite != null)
+        {
+            eyeshadowSprite.sprite = shadowSprite;
+            SetEyeshadowVisible(true);
+            hasShadow = true;
+            Debug.Log("Shadow applied");
+        }
+    }
+
+    public void ClearShadow()
+    {
+        if (hasShadow)
+        {
+            SetEyeshadowVisible(false);
+            hasShadow = false;
+            Debug.Log("Shadow cleared");
+        }
+    }
+
+    public void ClearAllMakeup()
+    {
+        SetAcneVisible(true);
+        SetEyeshadowVisible(false);
+        hasAcne = true;
+        hasShadow = false;
+        Debug.Log("All makeup cleared");
+    }
+
     private void SetAcneVisible(bool visible)
     {
         if (acneSprite != null)
             acneSprite.enabled = visible;
     }
 
-    // Проверка, есть ли прыщи
+    private void SetEyeshadowVisible(bool visible)
+    {
+        if (eyeshadowSprite != null)
+            eyeshadowSprite.enabled = visible;
+    }
+
     public bool HasAcne() => hasAcne;
+    public bool HasShadow() => hasShadow;
 }

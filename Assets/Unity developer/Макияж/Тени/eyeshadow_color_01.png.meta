@@ -54,8 +54,8 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
-  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spritePixelsToUnits: 375
+  spriteBorder: {x: 0, y: 0, z: 0, w: 519}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -142,45 +142,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: eyeshadow_color_01_0
+      name: eyeshadow_color_01_2
       rect:
         serializedVersion: 2
-        x: 872
-        y: 3410
-        width: 99
+        x: 873
+        y: 3411
+        width: 251
         height: 60
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 35fa1392b0e92f180800000000000000
-      internalID: -9083023727679918253
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: eyeshadow_color_01_1
-      rect:
-        serializedVersion: 2
-        x: 1024
-        y: 3410
-        width: 99
-        height: 60
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 6dd9c426827568e40800000000000000
-      internalID: 5658305812797103574
+      spriteID: fae412103df31eb4586c3c407b4e8c34
+      internalID: -157659706
       vertices: []
       indices: 
       edges: []
@@ -189,8 +167,8 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
-    internalID: 0
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 1537655665
     vertices: []
     indices: 
     edges: []
@@ -201,6 +179,7 @@ TextureImporter:
     nameFileIdTable:
       eyeshadow_color_01_0: -9083023727679918253
       eyeshadow_color_01_1: 5658305812797103574
+      eyeshadow_color_01_2: -157659706
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

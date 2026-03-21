@@ -2,41 +2,32 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using System.Collections;
 
-public class HandController : MonoBehaviour
+public class BrushHandler : MonoBehaviour
 {
     [Header("Components")]
     [SerializeField] private SpriteRenderer handSprite;
     [SerializeField] private Sprite defaultHand;
+    [SerializeField] private SpriteRenderer brushTip;
 
     [Header("Zones")]
     [SerializeField] private Collider2D faceZone;
     [SerializeField] private FaceController faceController;
 
-    [Header("Cream Objects")]
-    [SerializeField] private Transform creamObject;
-
-    [Header("Brush Objects")]
+    [Header("Objects")]
     [SerializeField] private Transform brushObject;
     [SerializeField] private Transform brushInHand;
-    [SerializeField] private SpriteRenderer brushTip;
 
     private Vector3 startPosition;
-    private Vector3 creamStartPosition;
     private Vector3 brushStartPosition;
-
-    private bool holdingCream = false;
     private bool holdingBrush = false;
     private bool isDragging = false;
-
-    private Color currentBrushColor = Color.white;
+    private Color currentColor = Color.white;
     private Sprite currentShadowSprite;
+    private string currentColorName = "";
 
     void Start()
     {
         startPosition = transform.position;
-
-        if (creamObject != null)
-            creamStartPosition = creamObject.position;
 
         if (brushObject != null)
             brushStartPosition = brushObject.position;
@@ -61,10 +52,26 @@ public class HandController : MonoBehaviour
             tip.transform.localPosition = new Vector3(0.4f, 0, 0);
             brushTip = tip.AddComponent<SpriteRenderer>();
             brushTip.color = Color.white;
+            brushTip.sprite = CreateCircleSprite();
         }
     }
 
-    public bool IsHoldingCream() => holdingCream;
+    private Sprite CreateCircleSprite()
+    {
+        Texture2D texture = new Texture2D(32, 32);
+        Color[] colors = new Color[32 * 32];
+
+        for (int i = 0; i < colors.Length; i++)
+        {
+            colors[i] = Color.white;
+        }
+
+        texture.SetPixels(colors);
+        texture.Apply();
+
+        return Sprite.Create(texture, new Rect(0, 0, 32, 32), new Vector2(0.5f, 0.5f));
+    }
+
     public bool IsHoldingBrush() => holdingBrush;
 
     public void StartDrag()
@@ -82,111 +89,33 @@ public class HandController : MonoBehaviour
             Vector2 worldPoint = Camera.main.ScreenToWorldPoint(eventData.position);
             if (faceZone.OverlapPoint(worldPoint))
             {
-                if (holdingCream)
-                    StartCoroutine(ApplyCreamAndReturn());
-                else if (holdingBrush)
-                    StartCoroutine(ApplyShadowAndReturn());
+                StartCoroutine(ApplyShadowAndReturn());
                 return;
             }
         }
 
-        if (holdingCream)
-            StartCoroutine(ReturnCreamToStart());
-        else if (holdingBrush)
-            StartCoroutine(ReturnBrushToStart());
+        StartCoroutine(ReturnBrushToStart());
     }
 
-    // CREAM METHODS
-    public void TakeCream()
+    public void PickColor(Color color, Sprite shadowSprite, string colorName, Vector3 colorPosition)
     {
-        StartCoroutine(TakeCreamAnimation());
-    }
-
-    private IEnumerator TakeCreamAnimation()
-    {
-        yield return StartCoroutine(MoveToPosition(transform.position, creamStartPosition, 0.2f, null));
-
-        yield return StartCoroutine(ScaleAnimation(0.8f, 0.05f));
-        yield return StartCoroutine(ScaleAnimation(1f, 0.05f));
-
-        holdingCream = true;
-
-        if (creamObject != null)
-        {
-            creamObject.SetParent(transform);
-            creamObject.localPosition = new Vector3(0.5f, -0.2f, 0);
-            creamObject.localScale = Vector3.one * 0.8f;
-
-            Collider2D creamCollider = creamObject.GetComponent<Collider2D>();
-            if (creamCollider != null)
-                creamCollider.enabled = false;
-        }
-
-        Vector3 middlePos = GetMiddlePosition(creamStartPosition);
-        yield return StartCoroutine(MoveToPosition(transform.position, middlePos, 0.2f, null));
-
-        Debug.Log("Cream taken");
-    }
-
-    private IEnumerator ApplyCreamAndReturn()
-    {
-        Vector3 originalPos = transform.position;
-        Vector3 forwardPos = originalPos + new Vector3(0, 0.3f, 0);
-
-        yield return StartCoroutine(MoveToPosition(originalPos, forwardPos, 0.1f, null));
-        yield return StartCoroutine(MoveToPosition(forwardPos, originalPos, 0.1f, null));
-
-        yield return StartCoroutine(ScaleAnimation(1.2f, 0.1f));
-        yield return StartCoroutine(ScaleAnimation(1f, 0.1f));
-
-        if (faceController != null)
-            faceController.RemoveAcne();
-
-        yield return StartCoroutine(ReturnCreamToStart());
-
-        Debug.Log("Cream applied");
-    }
-
-    private IEnumerator ReturnCreamToStart()
-    {
-        holdingCream = false;
-
-        if (creamObject != null)
-        {
-            creamObject.SetParent(null);
-
-            Collider2D creamCollider = creamObject.GetComponent<Collider2D>();
-            if (creamCollider != null)
-                creamCollider.enabled = true;
-
-            yield return StartCoroutine(MoveObjectToPosition(creamObject, creamObject.position, creamStartPosition, 0.3f, null));
-            creamObject.localScale = Vector3.one;
-        }
-
-        yield return StartCoroutine(MoveToPosition(transform.position, startPosition, 0.3f, null));
-
-        SetHandSprite(defaultHand);
-    }
-
-    // BRUSH METHODS
-    public void PickColor(Color color, Sprite shadowSprite, Vector3 colorPosition)
-    {
-        currentBrushColor = color;
+        currentColor = color;
         currentShadowSprite = shadowSprite;
+        currentColorName = colorName;
         StartCoroutine(PickColorAnimation(colorPosition));
     }
 
     private IEnumerator PickColorAnimation(Vector3 colorPosition)
     {
+        holdingBrush = true;
+
         yield return StartCoroutine(MoveToPosition(transform.position, colorPosition, 0.2f, null));
 
         yield return StartCoroutine(ScaleAnimation(0.8f, 0.05f));
         yield return StartCoroutine(ScaleAnimation(1f, 0.05f));
 
         if (brushTip != null)
-            brushTip.color = currentBrushColor;
-
-        holdingBrush = true;
+            brushTip.color = currentColor;
 
         if (brushObject != null)
         {
@@ -199,10 +128,10 @@ public class HandController : MonoBehaviour
                 brushCollider.enabled = false;
         }
 
-        Vector3 middlePos = GetMiddlePosition(brushStartPosition);
+        Vector3 middlePos = GetMiddlePosition();
         yield return StartCoroutine(MoveToPosition(transform.position, middlePos, 0.2f, null));
 
-        Debug.Log("Brush ready");
+        Debug.Log("Brush ready with color: " + currentColorName);
     }
 
     private IEnumerator ApplyShadowAndReturn()
@@ -221,7 +150,7 @@ public class HandController : MonoBehaviour
 
         yield return StartCoroutine(ReturnBrushToStart());
 
-        Debug.Log("Shadow applied");
+        Debug.Log("Shadow applied: " + currentColorName);
     }
 
     private IEnumerator ReturnBrushToStart()
@@ -236,7 +165,7 @@ public class HandController : MonoBehaviour
             if (brushCollider != null)
                 brushCollider.enabled = true;
 
-            yield return StartCoroutine(MoveObjectToPosition(brushObject, brushObject.position, brushStartPosition, 0.3f, null));
+            yield return StartCoroutine(MoveBrushToPosition(brushObject.position, brushStartPosition, 0.3f, null));
             brushObject.localScale = Vector3.one;
         }
 
@@ -248,9 +177,9 @@ public class HandController : MonoBehaviour
         SetHandSprite(defaultHand);
 
         currentShadowSprite = null;
+        currentColorName = "";
     }
 
-    // UTILITY METHODS
     private IEnumerator MoveToPosition(Vector3 from, Vector3 to, float duration, System.Action onComplete)
     {
         float elapsed = 0;
@@ -265,17 +194,17 @@ public class HandController : MonoBehaviour
         onComplete?.Invoke();
     }
 
-    private IEnumerator MoveObjectToPosition(Transform obj, Vector3 from, Vector3 to, float duration, System.Action onComplete)
+    private IEnumerator MoveBrushToPosition(Vector3 from, Vector3 to, float duration, System.Action onComplete)
     {
         float elapsed = 0;
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
-            obj.position = Vector3.Lerp(from, to, t);
+            brushObject.position = Vector3.Lerp(from, to, t);
             yield return null;
         }
-        obj.position = to;
+        brushObject.position = to;
         onComplete?.Invoke();
     }
 
@@ -295,10 +224,10 @@ public class HandController : MonoBehaviour
         transform.localScale = endScale;
     }
 
-    private Vector3 GetMiddlePosition(Vector3 itemStartPosition)
+    private Vector3 GetMiddlePosition()
     {
-        float x = (itemStartPosition.x + 0) / 2 + 0.5f;
-        float y = (itemStartPosition.y + 0) / 2 + 0.5f;
+        float x = (brushStartPosition.x + 0) / 2 + 0.5f;
+        float y = (brushStartPosition.y + 0) / 2 + 0.5f;
         return new Vector3(x, y, 0);
     }
 
@@ -306,15 +235,5 @@ public class HandController : MonoBehaviour
     {
         if (handSprite != null && sprite != null)
             handSprite.sprite = sprite;
-    }
-
-    public void ResetToIdle()
-    {
-        StopAllCoroutines();
-
-        if (holdingCream)
-            StartCoroutine(ReturnCreamToStart());
-        else if (holdingBrush)
-            StartCoroutine(ReturnBrushToStart());
     }
 }

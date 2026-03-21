@@ -11,11 +11,19 @@ public class CreamItem : MonoBehaviour
 
     void OnMouseDown()
     {
-        Debug.Log("Cream clicked");
-
-        if (handController != null && !handController.IsHoldingCream())
+        if (handController == null)
         {
-            handController.TakeCream();
+            Debug.LogError("HandController not found");
+            return;
         }
+
+        if (handController.IsHoldingCream() || handController.IsHoldingBrush())
+        {
+            Debug.Log("Hand is busy");
+            return;
+        }
+
+        Debug.Log("Cream clicked");
+        handController.TakeCream();
     }
 }
