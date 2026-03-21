@@ -6,9 +6,11 @@ public class FaceController : MonoBehaviour
     [SerializeField] private SpriteRenderer characterSprite;
     [SerializeField] private SpriteRenderer acneSprite;
     [SerializeField] private SpriteRenderer eyeshadowSprite;
+    [SerializeField] private SpriteRenderer lipsSprite;  // добавили губы
 
     private bool hasAcne = true;
     private bool hasShadow = false;
+    private bool hasLipstick = false;
 
     void Start()
     {
@@ -27,18 +29,24 @@ public class FaceController : MonoBehaviour
             Transform shadowTransform = transform.Find("Eyeshadow");
             if (shadowTransform != null)
                 eyeshadowSprite = shadowTransform.GetComponent<SpriteRenderer>();
+        }
+
+        if (lipsSprite == null)
+        {
+            Transform lipsTransform = transform.Find("Lips");
+            if (lipsTransform != null)
+                lipsSprite = lipsTransform.GetComponent<SpriteRenderer>();
             else
-                Debug.LogError("Eyeshadow object not found on Character!");
+                Debug.LogWarning("Lips object not found on Character!");
         }
 
         SetAcneVisible(true);
 
-        // ПРОВЕРКА: принудительно выключаем тени
         if (eyeshadowSprite != null)
-        {
             eyeshadowSprite.enabled = false;
-            Debug.Log("Eyeshadow disabled at start. Current enabled: " + eyeshadowSprite.enabled);
-        }
+
+        if (lipsSprite != null)
+            lipsSprite.enabled = false;
     }
 
     public void RemoveAcne()
@@ -51,8 +59,6 @@ public class FaceController : MonoBehaviour
 
     public void ApplyShadow(Sprite shadowSprite)
     {
-        Debug.Log("=== ApplyShadow START ===");
-
         if (eyeshadowSprite == null)
         {
             Debug.LogError("eyeshadowSprite is NULL!");
@@ -65,21 +71,34 @@ public class FaceController : MonoBehaviour
             return;
         }
 
-        // Меняем спрайт
         eyeshadowSprite.sprite = shadowSprite;
-        Debug.Log("Sprite changed to: " + shadowSprite.name);
-
-        // ВКЛЮЧАЕМ объект
         eyeshadowSprite.enabled = true;
-        Debug.Log("Eyeshadow enabled set to: " + eyeshadowSprite.enabled);
-
         hasShadow = true;
+        Debug.Log("Shadow applied");
+    }
 
-        // ПРОВЕРКА: принудительно проверяем
-        if (eyeshadowSprite.enabled)
-            Debug.Log("SUCCESS: Eyeshadow is now visible!");
-        else
-            Debug.LogError("FAILED: Eyeshadow is still disabled!");
+    // НОВЫЙ МЕТОД для помады
+    public void ApplyLipstick(Sprite lipstickSprite)
+    {
+        Debug.Log("=== ApplyLipstick START ===");
+
+        if (lipsSprite == null)
+        {
+            Debug.LogError("lipsSprite is NULL! Create a child object named 'Lips' on Character.");
+            return;
+        }
+
+        if (lipstickSprite == null)
+        {
+            Debug.LogError("lipstickSprite is NULL!");
+            return;
+        }
+
+        lipsSprite.sprite = lipstickSprite;
+        lipsSprite.enabled = true;
+        hasLipstick = true;
+
+        Debug.Log("Lipstick applied. Sprite: " + lipstickSprite.name);
     }
 
     public void ClearShadow()
@@ -93,13 +112,30 @@ public class FaceController : MonoBehaviour
         }
     }
 
+    public void ClearLipstick()
+    {
+        if (hasLipstick)
+        {
+            if (lipsSprite != null)
+                lipsSprite.enabled = false;
+            hasLipstick = false;
+            Debug.Log("Lipstick cleared");
+        }
+    }
+
     public void ClearAllMakeup()
     {
         SetAcneVisible(true);
+
         if (eyeshadowSprite != null)
             eyeshadowSprite.enabled = false;
+
+        if (lipsSprite != null)
+            lipsSprite.enabled = false;
+
         hasAcne = true;
         hasShadow = false;
+        hasLipstick = false;
         Debug.Log("All makeup cleared");
     }
 
@@ -111,4 +147,5 @@ public class FaceController : MonoBehaviour
 
     public bool HasAcne() => hasAcne;
     public bool HasShadow() => hasShadow;
+    public bool HasLipstick() => hasLipstick;
 }

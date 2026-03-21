@@ -20,16 +20,23 @@ public class HandController : MonoBehaviour
     [SerializeField] private Transform brushInHand;
     [SerializeField] private SpriteRenderer brushTip;
 
+    [Header("Lipstick Settings")]
+    [SerializeField] private Transform lipstickInHand;
+
     private Vector3 startPosition;
     private Vector3 creamStartPosition;
     private Vector3 brushStartPosition;
 
     private bool holdingCream = false;
     private bool holdingBrush = false;
+    private bool holdingLipstick = false;
     private bool isDragging = false;
 
     private Color currentBrushColor = Color.white;
     private Sprite currentShadowSprite;
+    private Sprite currentLipstickSprite;
+    private Transform currentLipstickObject; // текущая помада, которую взяли
+    private Vector3 currentLipstickStartPosition; // позиция помады
 
     void Start()
     {
@@ -54,6 +61,14 @@ public class HandController : MonoBehaviour
             brushInHand = anchor.transform;
         }
 
+        if (lipstickInHand == null)
+        {
+            GameObject anchor = new GameObject("LipstickInHand");
+            anchor.transform.SetParent(transform);
+            anchor.transform.localPosition = new Vector3(-0.32f, 0.81f, 0);
+            lipstickInHand = anchor.transform;
+        }
+
         if (brushTip == null && brushInHand != null)
         {
             GameObject tip = new GameObject("BrushTip");
@@ -66,6 +81,7 @@ public class HandController : MonoBehaviour
 
     public bool IsHoldingCream() => holdingCream;
     public bool IsHoldingBrush() => holdingBrush;
+    public bool IsHoldingLipstick() => holdingLipstick;
 
     public void StartDrag()
     {
@@ -86,6 +102,8 @@ public class HandController : MonoBehaviour
                     StartCoroutine(ApplyCreamAndReturn());
                 else if (holdingBrush)
                     StartCoroutine(ApplyShadowAndReturn());
+                else if (holdingLipstick)
+                    StartCoroutine(ApplyLipstickAndReturn());
                 return;
             }
         }
@@ -94,9 +112,11 @@ public class HandController : MonoBehaviour
             StartCoroutine(ReturnCreamToStart());
         else if (holdingBrush)
             StartCoroutine(ReturnBrushToStart());
+        else if (holdingLipstick)
+            StartCoroutine(ReturnLipstickToStart());
     }
 
-    // CREAM METHODS
+    // ==================== CREAM METHODS ====================
     public void TakeCream()
     {
         StartCoroutine(TakeCreamAnimation());
@@ -114,7 +134,7 @@ public class HandController : MonoBehaviour
         if (creamObject != null)
         {
             creamObject.SetParent(transform);
-            creamObject.localPosition = new Vector3(-0.308f, 0.608f, 0);
+            creamObject.localPosition = new Vector3(-0.319f, 0.619f, 0);
             creamObject.localScale = Vector3.one * 0.8f;
 
             Collider2D creamCollider = creamObject.GetComponent<Collider2D>();
@@ -168,7 +188,7 @@ public class HandController : MonoBehaviour
         SetHandSprite(defaultHand);
     }
 
-    // BRUSH METHODS
+    // ==================== BRUSH METHODS ====================
     public void PickColor(Color color, Sprite shadowSprite, Vector3 colorPosition)
     {
         currentBrushColor = color;
@@ -250,7 +270,100 @@ public class HandController : MonoBehaviour
         currentShadowSprite = null;
     }
 
-    // UTILITY METHODS
+    // ==================== LIPSTICK METHODS ====================
+    // Метод для взятия помады - передаем объект помады
+    public void TakeLipstick(Transform lipstickObject, Sprite lipstickSprite = null)
+    {
+        currentLipstickObject = lipstickObject;
+        currentLipstickStartPosition = lipstickObject.position;
+        currentLipstickSprite = lipstickSprite;
+        StartCoroutine(TakeLipstickAnimation());
+    }
+
+    private IEnumerator TakeLipstickAnimation()
+    {
+        Debug.Log("Taking lipstick from: " + currentLipstickObject.name);
+
+        // Двигаем руку к помаде
+        yield return StartCoroutine(MoveToPosition(transform.position, currentLipstickStartPosition, 0.2f, null));
+
+        // Анимация взятия
+        yield return StartCoroutine(ScaleAnimation(0.8f, 0.05f));
+        yield return StartCoroutine(ScaleAnimation(1f, 0.05f));
+
+        holdingLipstick = true;
+
+        // Прикрепляем помаду к руке
+        if (currentLipstickObject != null)
+        {
+            currentLipstickObject.SetParent(transform);
+
+            if (lipstickInHand != null)
+                currentLipstickObject.localPosition = lipstickInHand.localPosition;
+            else
+                currentLipstickObject.localPosition = new Vector3(0.5f, -0.2f, 0);
+
+            currentLipstickObject.localScale = Vector3.one * 0.8f;
+
+            Collider2D lipstickCollider = currentLipstickObject.GetComponent<Collider2D>();
+            if (lipstickCollider != null)
+                lipstickCollider.enabled = false;
+
+            Debug.Log("Lipstick attached to hand. Parent: " + currentLipstickObject.parent.name);
+        }
+
+        // Двигаем руку в промежуточную позицию
+        Vector3 middlePos = GetMiddlePosition(currentLipstickStartPosition);
+        yield return StartCoroutine(MoveToPosition(transform.position, middlePos, 0.2f, null));
+
+        Debug.Log("Lipstick taken");
+    }
+
+    private IEnumerator ApplyLipstickAndReturn()
+    {
+        Vector3 originalPos = transform.position;
+        Vector3 forwardPos = originalPos + new Vector3(0, 0.3f, 0);
+
+        yield return StartCoroutine(MoveToPosition(originalPos, forwardPos, 0.1f, null));
+        yield return StartCoroutine(MoveToPosition(forwardPos, originalPos, 0.1f, null));
+
+        yield return StartCoroutine(ScaleAnimation(1.2f, 0.1f));
+        yield return StartCoroutine(ScaleAnimation(1f, 0.1f));
+
+        if (faceController != null)
+            faceController.ApplyLipstick(currentLipstickSprite);
+
+        yield return StartCoroutine(ReturnLipstickToStart());
+
+        Debug.Log("Lipstick applied");
+    }
+
+    private IEnumerator ReturnLipstickToStart()
+    {
+        holdingLipstick = false;
+
+        if (currentLipstickObject != null)
+        {
+            currentLipstickObject.SetParent(null);
+
+            Collider2D lipstickCollider = currentLipstickObject.GetComponent<Collider2D>();
+            if (lipstickCollider != null)
+                lipstickCollider.enabled = true;
+
+            yield return StartCoroutine(MoveObjectToPosition(currentLipstickObject, currentLipstickObject.position, currentLipstickStartPosition, 0.3f, null));
+            currentLipstickObject.localScale = Vector3.one;
+
+            currentLipstickObject = null;
+        }
+
+        yield return StartCoroutine(MoveToPosition(transform.position, startPosition, 0.3f, null));
+
+        SetHandSprite(defaultHand);
+
+        currentLipstickSprite = null;
+    }
+
+    // ==================== UTILITY METHODS ====================
     private IEnumerator MoveToPosition(Vector3 from, Vector3 to, float duration, System.Action onComplete)
     {
         float elapsed = 0;
@@ -316,5 +429,7 @@ public class HandController : MonoBehaviour
             StartCoroutine(ReturnCreamToStart());
         else if (holdingBrush)
             StartCoroutine(ReturnBrushToStart());
+        else if (holdingLipstick)
+            StartCoroutine(ReturnLipstickToStart());
     }
 }
